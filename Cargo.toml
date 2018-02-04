@@ -1,0 +1,12 @@
+[package]
+name = "non-dominated-sort"
+version = "0.1.0"
+authors = ["Michael Neumann <mneumann@ntecs.de>"]
+license = "MIT"
+repository = "https://github.com/mneumann/non-dominated-sort-rs"
+description = "Fast Non-Dominated Sort Algorithm"
+keywords = ["algorithm", "sort", "pareto"]
+
+include = ["src/*.rs", "Cargo.toml", "LICENSE", "README.md"] 
+
+[dependencies]
