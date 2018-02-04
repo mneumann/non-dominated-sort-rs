@@ -122,13 +122,12 @@ impl<'a, S> Iterator for NonDominatedSort<'a, S> {
     /// Return the next pareto front
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.current_front.is_empty() {
-            return None;
-        }
-
-        // Calculate the next front
+        // Calculate the next front based on the current front, which
+        // might be empty, in which case the next_front will be empty as
+        // well and we stop.
 
         let mut next_front = Vec::new();
+
         for &(p_i, _) in self.current_front.iter() {
             // to calculate the next front, we have to remove the
             // solutions of the current front, and as such, decrease the
@@ -151,11 +150,14 @@ impl<'a, S> Iterator for NonDominatedSort<'a, S> {
             }
         }
 
-        // and return the current front, swapping it with the next
-
+        // swap current with next front
         let current_front = mem::replace(&mut self.current_front, next_front);
 
-        return Some(current_front);
+        if current_front.is_empty() {
+            None
+        } else {
+            Some(current_front)
+        }
     }
 }
 
