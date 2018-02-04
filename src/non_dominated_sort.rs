@@ -8,10 +8,10 @@ where
     S: 'a,
 {
     /// A reference to the solution
-    solution: &'a S,
+    pub solution: &'a S,
 
     /// The index that `solution` has within the `solutions` array.
-    index: usize,
+    pub index: usize,
 }
 
 pub struct Front<'a, S>
@@ -19,10 +19,10 @@ where
     S: 'a,
 {
     /// The first front has rank 0, second rank 1 and so on.
-    rank: usize,
+    pub rank: usize,
 
     // The solutions within this front
-    solutions: Vec<SolutionWithIndex<'a, S>>,
+    pub solutions: Vec<SolutionWithIndex<'a, S>>,
 }
 
 impl<'a, S> Front<'a, S>
