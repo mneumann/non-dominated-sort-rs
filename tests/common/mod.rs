@@ -1,6 +1,6 @@
-// Here we define code commonly used by modules `domination` and `non_dominated_sort`.
+// Here we define code commonly used by tests
 
-use domination::DominationOrd;
+use non_dominated_sort::DominationOrd;
 use std::cmp::Ordering;
 
 // Our multi-variate fitness/solution value
