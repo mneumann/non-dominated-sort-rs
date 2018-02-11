@@ -8,12 +8,40 @@ pub struct Front<'a, S: 'a> {
     previous_front: Vec<usize>,
     current_front: Vec<usize>,
     rank: usize,
-    pub solutions: &'a [S],
+    solutions: &'a [S],
 }
 
-impl<'a, S: 'a> Front<'a, S> {
+pub struct FrontIter<'a, 'b: 'a, S: 'b> {
+    front: &'a Front<'b, S>,
+    next_idx: usize,
+}
+
+impl<'a, 'b: 'a, S: 'b> Iterator for FrontIter<'a, 'b, S> {
+    type Item = (&'b S, usize);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.front.current_front.get(self.next_idx) {
+            Some(&solution_idx) => {
+                self.next_idx += 1;
+                Some((&self.front.solutions[solution_idx], solution_idx))
+            }
+            None => None,
+        }
+    }
+}
+
+impl<'a, 'b: 'a, S: 'b> Front<'b, S> {
     pub fn rank(&self) -> usize {
         self.rank
+    }
+
+    /// Iterates over the elements of the front.
+    ///
+    pub fn iter(&'a self) -> FrontIter<'a, 'b, S> {
+        FrontIter {
+            front: self,
+            next_idx: 0,
+        }
     }
 
     pub fn is_empty(&self) -> bool {
@@ -22,12 +50,6 @@ impl<'a, S: 'a> Front<'a, S> {
 
     pub fn len(&self) -> usize {
         self.current_front.len()
-    }
-
-    pub fn lookup_solution(&self, local_front_idx: usize) -> Option<&'a S> {
-        self.current_front
-            .get(local_front_idx)
-            .and_then(|&i| self.solutions.get(i))
     }
 
     pub fn current_front_indices(&self) -> &[usize] {
