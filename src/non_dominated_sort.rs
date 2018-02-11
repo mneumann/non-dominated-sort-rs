@@ -35,9 +35,10 @@ where
 }
 
 struct DominationInfo {
-    /// By how many other solutions is this solution dominated
+    /// By how many other solutions is this solution dominated.
+    /// If negative (or 0), this describes the front this solution has
+    /// been assigned.
     domination_count: isize,
-    rank: isize,
 }
 
 pub struct NonDominatedSort<'a, S>
@@ -71,7 +72,6 @@ impl<'a, S> NonDominatedSort<'a, S> {
             .iter()
             .map(|_| DominationInfo {
                 domination_count: 0,
-                rank: -1,
             })
             .collect();
 
@@ -105,7 +105,7 @@ impl<'a, S> NonDominatedSort<'a, S> {
                     // other solution.
                     //
                     // Mark as next front
-                    dominations[p.index].rank = current_rank;
+                    dominations[p.index].domination_count = -current_rank;
                 }
             }
         }
@@ -164,7 +164,7 @@ impl<'a, S> Iterator for NonDominatedSort<'a, S> {
             }
 
             let idx = self.entries[e_i].index;
-            if self.dominations[idx].rank == self.current_rank {
+            if self.dominations[idx].domination_count == -self.current_rank {
                 // This entry belongs to the current front, as it is
                 // not-dominated by any other solution
                 let entry = self.entries.swap_remove(e_i);
@@ -181,7 +181,7 @@ impl<'a, S> Iterator for NonDominatedSort<'a, S> {
                         // q is not dominated by any other solution. it belongs to the next front.
                         // next_front.solutions.push(SolutionWithIndex { index: q_i });
                         // mark for next round
-                        q.rank = self.current_rank + 1;
+                        q.domination_count = -(self.current_rank + 1);
                     }
                 }
                 // DO not increase index e_i here
