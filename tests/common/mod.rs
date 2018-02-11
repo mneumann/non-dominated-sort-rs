@@ -1,6 +1,6 @@
 // Here we define code commonly used by tests
 
-use non_dominated_sort::DominationOrd;
+use non_dominated_sort::{DominationOrd, Front};
 use std::cmp::Ordering;
 
 // Our multi-variate fitness/solution value
@@ -26,4 +26,26 @@ impl DominationOrd for TupleDominationOrd {
             Ordering::Equal
         }
     }
+}
+
+// Create `n_fronts` with each having `n` solutions in it.
+pub fn create_solutions_with_n_fronts(n: usize, n_fronts: usize) -> (Vec<Tuple>, Vec<Vec<usize>>) {
+    let mut solutions = Vec::with_capacity(n * n_fronts);
+    let mut expected_fronts = Vec::with_capacity(n_fronts);
+
+    for front in 0..n_fronts {
+        let mut current_front = Vec::with_capacity(n);
+        for i in 0..n {
+            solutions.push(Tuple(front + i, front + n - i));
+            current_front.push(front * n + i);
+        }
+        expected_fronts.push(current_front);
+    }
+
+    return (solutions, expected_fronts);
+}
+
+pub fn assert_front_eq(expected_rank: usize, expected_indices: &[usize], front: &Front<Tuple>) {
+    assert_eq!(expected_rank, front.rank);
+    assert_eq!(expected_indices.to_owned(), front.solutions_indices_only());
 }
