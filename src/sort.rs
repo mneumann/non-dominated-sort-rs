@@ -11,12 +11,12 @@ pub struct Front<'a, S: 'a> {
     solutions: &'a [S],
 }
 
-pub struct FrontIter<'a, 'b: 'a, S: 'b> {
+pub struct FrontElemIter<'a, 'b: 'a, S: 'b> {
     front: &'a Front<'b, S>,
     next_idx: usize,
 }
 
-impl<'a, 'b: 'a, S: 'b> Iterator for FrontIter<'a, 'b, S> {
+impl<'a, 'b: 'a, S: 'b> Iterator for FrontElemIter<'a, 'b, S> {
     type Item = (&'b S, usize);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -37,8 +37,8 @@ impl<'a, 'b: 'a, S: 'b> Front<'b, S> {
 
     /// Iterates over the elements of the front.
     ///
-    pub fn iter(&'a self) -> FrontIter<'a, 'b, S> {
-        FrontIter {
+    pub fn iter(&'a self) -> FrontElemIter<'a, 'b, S> {
+        FrontElemIter {
             front: self,
             next_idx: 0,
         }
