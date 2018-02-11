@@ -1,6 +1,5 @@
 use domination::DominationOrd;
 use std::cmp::Ordering;
-use std::collections::VecDeque;
 
 pub struct SolutionWithIndex {
     /// The index that `solution` has within the `solutions` array.
@@ -31,13 +30,14 @@ where
     /// The index that `solution` has within the `solutions` array.
     index: usize,
 
-    rank: isize,
-
-    /// By how many other solutions is this solution dominated
-    domination_count: usize,
-
     /// Which solutions we dominate
-    dominated_solutions: VecDeque<usize>,
+    dominated_solutions: Vec<usize>,
+}
+
+struct DominationInfo {
+    /// By how many other solutions is this solution dominated
+    domination_count: isize,
+    rank: isize,
 }
 
 pub struct NonDominatedSort<'a, S>
@@ -46,6 +46,7 @@ where
 {
     entries: Vec<Entry<'a, S>>,
     current_rank: isize,
+    dominations: Vec<DominationInfo>,
 }
 
 impl<'a, S> NonDominatedSort<'a, S> {
@@ -63,8 +64,13 @@ impl<'a, S> NonDominatedSort<'a, S> {
             .map(|(index, solution)| Entry {
                 solution,
                 index,
+                dominated_solutions: Vec::new(),
+            })
+            .collect();
+        let mut dominations: Vec<_> = solutions
+            .iter()
+            .map(|_| DominationInfo {
                 domination_count: 0,
-                dominated_solutions: VecDeque::new(),
                 rank: -1,
             })
             .collect();
@@ -79,25 +85,27 @@ impl<'a, S> NonDominatedSort<'a, S> {
                         Ordering::Less => {
                             // p dominates q
                             // Add `q` to the set of solutions dominated by `p`.
-                            p.dominated_solutions.push_back(q.index);
+                            p.dominated_solutions.push(q.index);
                             // q is dominated by p
-                            q.domination_count += 1;
+                            dominations[q.index].domination_count += 1;
                         }
                         Ordering::Greater => {
                             // p is dominated by q
                             // Add `p` to the set of solutions dominated by `q`.
-                            q.dominated_solutions.push_back(p.index);
+                            q.dominated_solutions.push(p.index);
                             // q dominates p
                             // Increment domination counter of `p`.
-                            p.domination_count += 1;
+                            dominations[p.index].domination_count += 1;
                         }
                         Ordering::Equal => {}
                     }
                 }
-                if p.domination_count == 0 {
+                if dominations[p.index].domination_count == 0 {
                     // `p` belongs to the first front as it is not dominated by any
                     // other solution.
-                    p.rank = current_rank;
+                    //
+                    // Mark as next front
+                    dominations[p.index].rank = current_rank;
                 }
             }
         }
@@ -105,6 +113,7 @@ impl<'a, S> NonDominatedSort<'a, S> {
         Self {
             entries,
             current_rank,
+            dominations,
         }
     }
 
@@ -139,26 +148,33 @@ impl<'a, S> Iterator for NonDominatedSort<'a, S> {
     /// Return the next pareto front
 
     fn next(&mut self) -> Option<Self::Item> {
-        // Calculate the next front based on the current front, which
-        // might be empty, in which case the next_front will be empty as
+        if self.entries.is_empty() {
+            return None;
+        }
 
         let mut next_front = Front {
             rank: self.current_rank as usize,
             solutions: Vec::new(),
         };
 
-        for e_i in 0..self.entries.len() {
-            if self.entries[e_i].rank == self.current_rank {
-                debug_assert!(self.entries[e_i].domination_count == 0);
+        let mut e_i = 0;
+        loop {
+            if e_i >= self.entries.len() {
+                break;
+            }
+
+            let idx = self.entries[e_i].index;
+            if self.dominations[idx].rank == self.current_rank {
                 // This entry belongs to the current front, as it is
                 // not-dominated by any other solution
-                next_front.solutions.push(SolutionWithIndex {
-                    index: self.entries[e_i].index,
-                });
+                let entry = self.entries.swap_remove(e_i);
 
-                //
-                while let Some(q_i) = self.entries[e_i].dominated_solutions.pop_front() {
-                    let q = &mut self.entries[q_i];
+                next_front
+                    .solutions
+                    .push(SolutionWithIndex { index: entry.index });
+
+                for q_i in entry.dominated_solutions.into_iter() {
+                    let q = &mut self.dominations[q_i];
                     debug_assert!(q.domination_count > 0);
                     q.domination_count -= 1;
                     if q.domination_count == 0 {
@@ -168,7 +184,10 @@ impl<'a, S> Iterator for NonDominatedSort<'a, S> {
                         q.rank = self.current_rank + 1;
                     }
                 }
+                // DO not increase index e_i here
+                continue;
             }
+            e_i += 1;
         }
 
         self.current_rank += 1;
