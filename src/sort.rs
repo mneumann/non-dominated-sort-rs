@@ -54,9 +54,8 @@ impl<'a, S: 'a> Front<'a, S> {
     }
 }
 
-/// Perform a non-dominated sort of `solutions`.
-///
-/// Each pareto front (the indices of the `solutions`) can be obtained by calling `next()`.
+/// Perform a non-dominated sort of `solutions`. Returns the first
+/// pareto front.
 pub fn non_dominated_sort<'a, S, D>(solutions: &'a [S], domination: &D) -> Front<'a, S>
 where
     D: DominationOrd<Solution = S>,
