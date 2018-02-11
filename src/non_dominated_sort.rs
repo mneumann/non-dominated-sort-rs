@@ -47,6 +47,7 @@ where
 {
     entries: Vec<Entry<'a, S>>,
     current_rank: isize,
+    max_rank: isize,
     dominations: Vec<DominationInfo>,
 }
 
@@ -68,6 +69,7 @@ impl<'a, S> NonDominatedSort<'a, S> {
                 dominated_solutions: Vec::new(),
             })
             .collect();
+
         let mut dominations: Vec<_> = solutions
             .iter()
             .map(|_| DominationInfo {
@@ -75,8 +77,7 @@ impl<'a, S> NonDominatedSort<'a, S> {
             })
             .collect();
 
-        let current_rank = 0;
-
+        // inital pass
         for start in 0..entries.len() {
             let mut iter = entries[start..].iter_mut();
             if let Some(p) = iter.next() {
@@ -100,19 +101,52 @@ impl<'a, S> NonDominatedSort<'a, S> {
                         Ordering::Equal => {}
                     }
                 }
-                if dominations[p.index].domination_count == 0 {
-                    // `p` belongs to the first front as it is not dominated by any
-                    // other solution.
-                    //
-                    // Mark as next front
-                    dominations[p.index].domination_count = -current_rank;
+            }
+        }
+
+        let mut rank = 0;
+        loop {
+            if entries.is_empty() {
+                break;
+            }
+            let mut e_i = 0;
+            loop {
+                if e_i >= entries.len() {
+                    break;
+                }
+
+                let idx = entries[e_i].index;
+                if dominations[idx].domination_count == rank {
+                    // This entry belongs to the current front, as it is
+                    // not-dominated by any other solution
+                    let entry = entries.swap_remove(e_i);
+
+                    for q_i in entry.dominated_solutions.into_iter() {
+                        let q = &mut dominations[q_i];
+                        debug_assert!(q.domination_count > 0);
+                        q.domination_count -= 1;
+                        if q.domination_count == 0 {
+                            // q is not dominated by any other solution. it belongs to the next front.
+                            // next_front.solutions.push(SolutionWithIndex { index: q_i });
+                            // mark for next round
+                            q.domination_count = rank - 1;
+                        }
+                    }
+                // DO not increase index e_i here, as we swapped in
+                // an element from the back.
+                // continue;
+                } else {
+                    e_i += 1;
                 }
             }
+
+            rank -= 1;
         }
 
         Self {
             entries,
-            current_rank,
+            current_rank: 0,
+            max_rank: rank,
             dominations,
         }
     }
@@ -148,54 +182,21 @@ impl<'a, S> Iterator for NonDominatedSort<'a, S> {
     /// Return the next pareto front
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.entries.is_empty() {
-            return None;
-        }
-
-        let mut next_front = Front {
-            rank: self.current_rank as usize,
-            solutions: Vec::new(),
+        let next_front = Front {
+            rank: -self.current_rank as usize,
+            solutions: self.dominations
+                .iter()
+                .enumerate()
+                .filter(|&(_i, d)| d.domination_count == self.current_rank)
+                .map(|(i, _d)| SolutionWithIndex { index: i })
+                .collect(),
         };
 
-        let mut e_i = 0;
-        loop {
-            if e_i >= self.entries.len() {
-                break;
-            }
-
-            let idx = self.entries[e_i].index;
-            if self.dominations[idx].domination_count == -self.current_rank {
-                // This entry belongs to the current front, as it is
-                // not-dominated by any other solution
-                let entry = self.entries.swap_remove(e_i);
-
-                next_front
-                    .solutions
-                    .push(SolutionWithIndex { index: entry.index });
-
-                for q_i in entry.dominated_solutions.into_iter() {
-                    let q = &mut self.dominations[q_i];
-                    debug_assert!(q.domination_count > 0);
-                    q.domination_count -= 1;
-                    if q.domination_count == 0 {
-                        // q is not dominated by any other solution. it belongs to the next front.
-                        // next_front.solutions.push(SolutionWithIndex { index: q_i });
-                        // mark for next round
-                        q.domination_count = -(self.current_rank + 1);
-                    }
-                }
-                // DO not increase index e_i here
-                continue;
-            }
-            e_i += 1;
-        }
-
-        self.current_rank += 1;
-
         if next_front.solutions.is_empty() {
-            None
+            return None;
         } else {
-            Some(next_front)
+            self.current_rank -= 1;
+            return Some(next_front);
         }
     }
 }
