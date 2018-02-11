@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 
 pub struct Front<'a, S: 'a> {
     dominated_solutions: Vec<Vec<usize>>,
-    domination_count: Vec<isize>,
+    domination_count: Vec<usize>,
     current_front: Vec<usize>,
     rank: usize,
     solutions: &'a [S],
@@ -61,13 +61,13 @@ pub fn non_dominated_sort<'a, S, D>(solutions: &'a [S], domination: &D) -> Front
 where
     D: DominationOrd<Solution = S>,
 {
-    /// The indices of the solutions that are dominated by this `solution`.
+    // The indices of the solutions that are dominated by this `solution`.
     let mut dominated_solutions: Vec<Vec<usize>> = solutions.iter().map(|_| Vec::new()).collect();
 
     // For each solutions, we keep a domination count, i.e.
     // the number of solutions that dominate the solution.
     // If this count is negative, it is the rank of the front.
-    let mut domination_count: Vec<isize> = solutions.iter().map(|_| 0).collect();
+    let mut domination_count: Vec<usize> = solutions.iter().map(|_| 0).collect();
 
     let mut current_front: Vec<usize> = Vec::new();
 
