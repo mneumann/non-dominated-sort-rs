@@ -1,6 +1,5 @@
 use domination::DominationOrd;
 use std::cmp::Ordering;
-use std::mem;
 use std::collections::VecDeque;
 
 pub struct SolutionWithIndex {
@@ -32,6 +31,8 @@ where
     /// The index that `solution` has within the `solutions` array.
     index: usize,
 
+    rank: isize,
+
     /// By how many other solutions is this solution dominated
     domination_count: usize,
 
@@ -44,7 +45,7 @@ where
     S: 'a,
 {
     entries: Vec<Entry<'a, S>>,
-    current_front: Front,
+    current_rank: isize,
 }
 
 impl<'a, S> NonDominatedSort<'a, S> {
@@ -56,11 +57,6 @@ impl<'a, S> NonDominatedSort<'a, S> {
     where
         D: DominationOrd<Solution = S>,
     {
-        let mut current_front = Front {
-            rank: 0,
-            solutions: Vec::new(),
-        };
-
         let mut entries: Vec<_> = solutions
             .iter()
             .enumerate()
@@ -69,8 +65,11 @@ impl<'a, S> NonDominatedSort<'a, S> {
                 index,
                 domination_count: 0,
                 dominated_solutions: VecDeque::new(),
+                rank: -1,
             })
             .collect();
+
+        let current_rank = 0;
 
         for start in 0..entries.len() {
             let mut iter = entries[start..].iter_mut();
@@ -98,16 +97,14 @@ impl<'a, S> NonDominatedSort<'a, S> {
                 if p.domination_count == 0 {
                     // `p` belongs to the first front as it is not dominated by any
                     // other solution.
-                    current_front
-                        .solutions
-                        .push(SolutionWithIndex { index: p.index });
+                    p.rank = current_rank;
                 }
             }
         }
 
         Self {
             entries,
-            current_front,
+            current_rank,
         }
     }
 
@@ -144,42 +141,42 @@ impl<'a, S> Iterator for NonDominatedSort<'a, S> {
     fn next(&mut self) -> Option<Self::Item> {
         // Calculate the next front based on the current front, which
         // might be empty, in which case the next_front will be empty as
-        // well and we stop.
 
         let mut next_front = Front {
-            rank: self.current_front.rank + 1,
+            rank: self.current_rank as usize,
             solutions: Vec::new(),
         };
 
-        for p in self.current_front.solutions.iter() {
-            // to calculate the next front, we have to remove the
-            // solutions of the current front, and as such, decrease the
-            // domination_count of they dominated_solutions. We can
-            // destruct the dominated_solutions array here, as we will
-            // no longer need it.
-            // The only problem with poping off solutions off the end is
-            // that we will populate the fronts in reverse order. For
-            // that reason, we are using a VecDeque. This should give us
-            // a stable sort.
+        for e_i in 0..self.entries.len() {
+            if self.entries[e_i].rank == self.current_rank {
+                debug_assert!(self.entries[e_i].domination_count == 0);
+                // This entry belongs to the current front, as it is
+                // not-dominated by any other solution
+                next_front.solutions.push(SolutionWithIndex {
+                    index: self.entries[e_i].index,
+                });
 
-            while let Some(q_i) = self.entries[p.index].dominated_solutions.pop_front() {
-                let q = &mut self.entries[q_i];
-                debug_assert!(q.domination_count > 0);
-                q.domination_count -= 1;
-                if q.domination_count == 0 {
-                    // q is not dominated by any other solution. it belongs to the next front.
-                    next_front.solutions.push(SolutionWithIndex { index: q_i });
+                //
+                while let Some(q_i) = self.entries[e_i].dominated_solutions.pop_front() {
+                    let q = &mut self.entries[q_i];
+                    debug_assert!(q.domination_count > 0);
+                    q.domination_count -= 1;
+                    if q.domination_count == 0 {
+                        // q is not dominated by any other solution. it belongs to the next front.
+                        // next_front.solutions.push(SolutionWithIndex { index: q_i });
+                        // mark for next round
+                        q.rank = self.current_rank + 1;
+                    }
                 }
             }
         }
 
-        // swap current with next front
-        let current_front = mem::replace(&mut self.current_front, next_front);
+        self.current_rank += 1;
 
-        if current_front.solutions.is_empty() {
+        if next_front.solutions.is_empty() {
             None
         } else {
-            Some(current_front)
+            Some(next_front)
         }
     }
 }
