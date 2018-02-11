@@ -2,7 +2,7 @@ extern crate non_dominated_sort;
 mod common;
 
 use common::{assert_front_eq, create_solutions_with_n_fronts, Tuple, TupleDominationOrd};
-use non_dominated_sort::NonDominatedSort;
+use non_dominated_sort::{non_dominated_sort, NonDominatedSort};
 
 fn get_solutions() -> Vec<Tuple> {
     vec![
@@ -85,4 +85,25 @@ fn test_fronts(n: usize, n_fronts: usize) {
 #[test]
 fn test_non_dominated_sort2() {
     test_fronts(1_000, 5);
+}
+
+#[test]
+fn test_non_dominated_sort3() {
+    let solutions = get_solutions();
+
+    let f0 = non_dominated_sort(&solutions, &TupleDominationOrd);
+    assert_eq!(0, f0.rank());
+    assert_eq!(&[2, 4], f0.current_front_indices());
+
+    let f1 = f0.next_front();
+    assert_eq!(1, f1.rank());
+    assert_eq!(&[0, 1], f1.current_front_indices());
+
+    let f2 = f1.next_front();
+    assert_eq!(2, f2.rank());
+    assert_eq!(&[3], f2.current_front_indices());
+
+    let f3 = f2.next_front();
+    assert_eq!(3, f3.rank());
+    assert_eq!(true, f3.is_empty());
 }
