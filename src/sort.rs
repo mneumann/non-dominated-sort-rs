@@ -1,13 +1,14 @@
 use domination::DominationOrd;
 use std::cmp::Ordering;
 
+#[derive(Debug, Clone)]
 pub struct Front<'a, S: 'a> {
     dominated_solutions: Vec<Vec<usize>>,
     domination_count: Vec<usize>,
     previous_front: Vec<usize>,
     current_front: Vec<usize>,
     rank: usize,
-    solutions: &'a [S],
+    pub solutions: &'a [S],
 }
 
 impl<'a, S: 'a> Front<'a, S> {
@@ -17,6 +18,16 @@ impl<'a, S: 'a> Front<'a, S> {
 
     pub fn is_empty(&self) -> bool {
         self.current_front.is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+        self.current_front.len()
+    }
+
+    pub fn lookup_solution(&self, local_front_idx: usize) -> Option<&'a S> {
+        self.current_front
+            .get(local_front_idx)
+            .and_then(|&i| self.solutions.get(i))
     }
 
     pub fn current_front_indices(&self) -> &[usize] {
