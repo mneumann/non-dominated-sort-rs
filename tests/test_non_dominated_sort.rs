@@ -18,7 +18,7 @@ fn get_solutions() -> Vec<Tuple> {
 fn test_non_dominated_sort() {
     let solutions = get_solutions();
 
-    let f0 = non_dominated_sort::<_, _, usize>(&solutions, &TupleDominationOrd);
+    let f0 = non_dominated_sort(&solutions, &TupleDominationOrd);
     assert_eq!(0, f0.rank());
     assert_eq!(&[2, 4], f0.current_front_indices());
 
