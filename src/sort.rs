@@ -4,6 +4,7 @@ use std::cmp::Ordering;
 pub struct Front<'a, S: 'a> {
     dominated_solutions: Vec<Vec<usize>>,
     domination_count: Vec<usize>,
+    previous_front: Vec<usize>,
     current_front: Vec<usize>,
     rank: usize,
     solutions: &'a [S],
@@ -26,14 +27,17 @@ impl<'a, S: 'a> Front<'a, S> {
         let Front {
             dominated_solutions,
             mut domination_count,
+            previous_front,
             current_front,
             rank,
             solutions,
         } = self;
 
-        let mut next_front = Vec::new();
+        // reuse the previous_front
+        let mut next_front = previous_front;
+        next_front.clear();
 
-        for p_i in current_front.into_iter() {
+        for &p_i in current_front.iter() {
             for &q_i in dominated_solutions[p_i].iter() {
                 debug_assert!(domination_count[q_i] > 0);
                 domination_count[q_i] -= 1;
@@ -47,6 +51,7 @@ impl<'a, S: 'a> Front<'a, S> {
         Self {
             dominated_solutions,
             domination_count,
+            previous_front: current_front,
             current_front: next_front,
             rank: rank + 1,
             solutions,
@@ -103,6 +108,7 @@ where
     Front {
         dominated_solutions,
         domination_count,
+        previous_front: Vec::new(),
         current_front,
         rank: 0,
         solutions,
