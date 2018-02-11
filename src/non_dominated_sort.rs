@@ -84,37 +84,37 @@ impl<'a, S> NonDominatedSort<'a, S> {
             })
             .collect();
 
-        for mid in 1..entries.len() + 1 {
-            let (front_slice, tail_slice) = entries.split_at_mut(mid);
-            debug_assert!(front_slice.len() > 0);
-            let p = front_slice.last_mut().unwrap();
-            for q in tail_slice.iter_mut() {
-                match domination.domination_ord(p.solution, q.solution) {
-                    Ordering::Less => {
-                        // p dominates q
-                        // Add `q` to the set of solutions dominated by `p`.
-                        p.dominated_solutions.push_back(q.index);
-                        // q is dominated by p
-                        q.domination_count += 1;
+        for start in 0..entries.len() {
+            let mut iter = entries[start..].iter_mut();
+            if let Some(p) = iter.next() {
+                for q in iter {
+                    match domination.domination_ord(p.solution, q.solution) {
+                        Ordering::Less => {
+                            // p dominates q
+                            // Add `q` to the set of solutions dominated by `p`.
+                            p.dominated_solutions.push_back(q.index);
+                            // q is dominated by p
+                            q.domination_count += 1;
+                        }
+                        Ordering::Greater => {
+                            // p is dominated by q
+                            // Add `p` to the set of solutions dominated by `q`.
+                            q.dominated_solutions.push_back(p.index);
+                            // q dominates p
+                            // Increment domination counter of `p`.
+                            p.domination_count += 1;
+                        }
+                        Ordering::Equal => {}
                     }
-                    Ordering::Greater => {
-                        // p is dominated by q
-                        // Add `p` to the set of solutions dominated by `q`.
-                        q.dominated_solutions.push_back(p.index);
-                        // q dominates p
-                        // Increment domination counter of `p`.
-                        p.domination_count += 1;
-                    }
-                    Ordering::Equal => {}
                 }
-            }
-            if p.domination_count == 0 {
-                // `p` belongs to the first front as it is not dominated by any
-                // other solution.
-                current_front.solutions.push(SolutionWithIndex {
-                    solution: p.solution,
-                    index: p.index,
-                });
+                if p.domination_count == 0 {
+                    // `p` belongs to the first front as it is not dominated by any
+                    // other solution.
+                    current_front.solutions.push(SolutionWithIndex {
+                        solution: p.solution,
+                        index: p.index,
+                    });
+                }
             }
         }
 
