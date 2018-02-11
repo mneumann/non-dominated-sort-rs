@@ -1,5 +1,5 @@
 pub mod domination;
-pub mod non_dominated_sort_impl;
+pub mod sort;
 
 pub use domination::DominationOrd;
-pub use non_dominated_sort_impl::{non_dominated_sort, Front, NonDominatedSort, SolutionWithIndex};
+pub use sort::{non_dominated_sort, Front};
