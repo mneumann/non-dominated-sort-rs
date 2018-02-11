@@ -3,32 +3,20 @@ use std::cmp::Ordering;
 use std::mem;
 use std::collections::VecDeque;
 
-pub struct SolutionWithIndex<'a, S>
-where
-    S: 'a,
-{
-    /// A reference to the solution
-    pub solution: &'a S,
-
+pub struct SolutionWithIndex {
     /// The index that `solution` has within the `solutions` array.
     pub index: usize,
 }
 
-pub struct Front<'a, S>
-where
-    S: 'a,
-{
+pub struct Front {
     /// The first front has rank 0, second rank 1 and so on.
     pub rank: usize,
 
     // The solutions within this front
-    pub solutions: Vec<SolutionWithIndex<'a, S>>,
+    pub solutions: Vec<SolutionWithIndex>,
 }
 
-impl<'a, S> Front<'a, S>
-where
-    S: 'a,
-{
+impl Front {
     pub fn solutions_indices_only(&self) -> Vec<usize> {
         self.solutions.iter().map(|s| s.index).collect()
     }
@@ -56,7 +44,7 @@ where
     S: 'a,
 {
     entries: Vec<Entry<'a, S>>,
-    current_front: Front<'a, S>,
+    current_front: Front,
 }
 
 impl<'a, S> NonDominatedSort<'a, S> {
@@ -110,10 +98,9 @@ impl<'a, S> NonDominatedSort<'a, S> {
                 if p.domination_count == 0 {
                     // `p` belongs to the first front as it is not dominated by any
                     // other solution.
-                    current_front.solutions.push(SolutionWithIndex {
-                        solution: p.solution,
-                        index: p.index,
-                    });
+                    current_front
+                        .solutions
+                        .push(SolutionWithIndex { index: p.index });
                 }
             }
         }
@@ -125,14 +112,14 @@ impl<'a, S> NonDominatedSort<'a, S> {
     }
 
     /// Returns an array containing all pareto fronts.
-    pub fn pareto_fronts(self) -> Vec<Front<'a, S>> {
+    pub fn pareto_fronts(self) -> Vec<Front> {
         self.into_iter().collect()
     }
 
     /// Returns an array containing the first pareto fronts, until
     /// `max_solutions` have been found. Note that always the whole fronts are
     /// returned, i.e. the number of solutions returned may be higher.
-    pub fn pareto_fronts_stop_at(self, max_solutions: usize) -> Vec<Front<'a, S>> {
+    pub fn pareto_fronts_stop_at(self, max_solutions: usize) -> Vec<Front> {
         let mut found_solutions = 0;
         let mut fronts = Vec::new();
 
@@ -150,7 +137,7 @@ impl<'a, S> NonDominatedSort<'a, S> {
 /// Iterate over the pareto fronts. Each call to next() will yield the
 /// next pareto front.
 impl<'a, S> Iterator for NonDominatedSort<'a, S> {
-    type Item = Front<'a, S>;
+    type Item = Front;
 
     /// Return the next pareto front
 
@@ -181,10 +168,7 @@ impl<'a, S> Iterator for NonDominatedSort<'a, S> {
                 q.domination_count -= 1;
                 if q.domination_count == 0 {
                     // q is not dominated by any other solution. it belongs to the next front.
-                    next_front.solutions.push(SolutionWithIndex {
-                        solution: q.solution,
-                        index: q_i,
-                    });
+                    next_front.solutions.push(SolutionWithIndex { index: q_i });
                 }
             }
         }

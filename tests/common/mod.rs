@@ -45,7 +45,7 @@ pub fn create_solutions_with_n_fronts(n: usize, n_fronts: usize) -> (Vec<Tuple>,
     return (solutions, expected_fronts);
 }
 
-pub fn assert_front_eq(expected_rank: usize, expected_indices: &[usize], front: &Front<Tuple>) {
+pub fn assert_front_eq(expected_rank: usize, expected_indices: &[usize], front: &Front) {
     assert_eq!(expected_rank, front.rank);
     assert_eq!(expected_indices.len(), front.solutions.len());
     for (&i, j) in expected_indices
