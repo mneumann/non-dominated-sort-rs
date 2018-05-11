@@ -5,8 +5,8 @@ extern crate test;
 #[path = "../tests/common/mod.rs"]
 mod common;
 
-use non_dominated_sort::non_dominated_sort;
 use common::{create_solutions_with_n_fronts, TupleDominationOrd};
+use non_dominated_sort::non_dominated_sort;
 use test::Bencher;
 
 #[bench]

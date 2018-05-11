@@ -1,9 +1,9 @@
 extern crate non_dominated_sort;
 mod common;
 
-use std::cmp::Ordering;
 use common::{Tuple, TupleDominationOrd};
 use non_dominated_sort::DominationOrd;
+use std::cmp::Ordering;
 
 #[test]
 fn test_non_domination() {
