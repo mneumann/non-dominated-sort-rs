@@ -2,22 +2,22 @@ use domination::DominationOrd;
 use std::cmp::Ordering;
 
 #[derive(Debug, Clone)]
-pub struct Front<'a, S: 'a> {
+pub struct Front<'s, S: 's> {
     dominated_solutions: Vec<Vec<usize>>,
     domination_count: Vec<usize>,
     previous_front: Vec<usize>,
     current_front: Vec<usize>,
     rank: usize,
-    solutions: &'a [S],
+    solutions: &'s [S],
 }
 
-pub struct FrontElemIter<'a, 'b: 'a, S: 'b> {
-    front: &'a Front<'b, S>,
+pub struct FrontElemIter<'f, 's: 'f, S: 's> {
+    front: &'f Front<'s, S>,
     next_idx: usize,
 }
 
-impl<'a, 'b: 'a, S: 'b> Iterator for FrontElemIter<'a, 'b, S> {
-    type Item = (&'b S, usize);
+impl<'f, 's: 'f, S: 's> Iterator for FrontElemIter<'f, 's, S> {
+    type Item = (&'s S, usize);
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.front.current_front.get(self.next_idx) {
@@ -30,14 +30,14 @@ impl<'a, 'b: 'a, S: 'b> Iterator for FrontElemIter<'a, 'b, S> {
     }
 }
 
-impl<'a, 'b: 'a, S: 'b> Front<'b, S> {
+impl<'f, 's: 'f, S: 's> Front<'s, S> {
     pub fn rank(&self) -> usize {
         self.rank
     }
 
     /// Iterates over the elements of the front.
     ///
-    pub fn iter(&'a self) -> FrontElemIter<'a, 'b, S> {
+    pub fn iter(&'f self) -> FrontElemIter<'f, 's, S> {
         FrontElemIter {
             front: self,
             next_idx: 0,
@@ -94,7 +94,7 @@ impl<'a, 'b: 'a, S: 'b> Front<'b, S> {
 
 /// Perform a non-dominated sort of `solutions`. Returns the first
 /// pareto front.
-pub fn non_dominated_sort<'a, S, D>(solutions: &'a [S], domination: &D) -> Front<'a, S>
+pub fn non_dominated_sort<'s, S, D>(solutions: &'s [S], domination: &D) -> Front<'s, S>
 where
     D: DominationOrd<Solution = S>,
 {
