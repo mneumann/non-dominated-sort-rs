@@ -1,6 +1,6 @@
 // Here we define code commonly used by tests
 
-use non_dominated_sort::DominationOrd;
+use non_dominated_sort::DominanceOrd;
 use std::cmp::Ordering;
 
 // Our multi-variate fitness/solution value
@@ -8,12 +8,12 @@ pub struct Tuple(pub usize, pub usize);
 
 // We can have multiple dominance relations defined on a single
 // type, without having to wrap the "Tuple" itself.
-pub struct TupleDominationOrd;
+pub struct TupleDominanceOrd;
 
-impl DominationOrd for TupleDominationOrd {
-    type Solution = Tuple;
+impl DominanceOrd for TupleDominanceOrd {
+    type T = Tuple;
 
-    fn domination_ord(&self, a: &Self::Solution, b: &Self::Solution) -> Ordering {
+    fn dominance_ord(&self, a: &Self::T, b: &Self::T) -> Ordering {
         if a.0 < b.0 && a.1 <= b.1 {
             Ordering::Less
         } else if a.0 <= b.0 && a.1 < b.1 {

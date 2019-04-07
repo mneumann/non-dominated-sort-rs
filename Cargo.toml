@@ -1,12 +1,21 @@
 [package]
 name = "non-dominated-sort"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Michael Neumann <mneumann@ntecs.de>"]
 license = "MIT"
 repository = "https://github.com/mneumann/non-dominated-sort-rs"
 description = "Fast Non-Dominated Sort Algorithm"
-keywords = ["algorithm", "sort", "pareto"]
+keywords = ["sort", "algorithm", "pareto"]
+edition = "2018"
 
-include = ["src/*.rs", "Cargo.toml", "LICENSE", "README.md"] 
+include = ["src/*.rs", "tests/*.rs", "benches/*.rs", "Cargo.toml", "LICENSE", "README.md"]
 
 [dependencies]
+dominance-ord = "0.1"
+
+[dev-dependencies]
+criterion = "0.2"
+
+[[bench]]
+name = "bench_non_dominated_sort"
+harness = false
